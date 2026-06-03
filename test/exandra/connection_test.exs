@@ -814,7 +814,7 @@ defmodule Exandra.ConnectionTest do
 
     assert execute_ddl(create) ==
              [
-               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'enabled': 'true'}|
+               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'enabled': true}|
              ]
 
     create =
@@ -823,7 +823,7 @@ defmodule Exandra.ConnectionTest do
 
     assert execute_ddl(create) ==
              [
-               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'keys': 'NONE', 'rows_per_partition': '120'}|
+               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'keys': 'NONE', 'rows_per_partition': 120}|
              ]
 
     create =
@@ -837,7 +837,22 @@ defmodule Exandra.ConnectionTest do
 
     assert execute_ddl(create) ==
              [
-               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'keys': 'NONE', 'rows_per_partition': '120'} AND compactions = {'class': 'SizeTieredCompantionStrategy', 'min_threshold': '4'}|
+               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'keys': 'NONE', 'rows_per_partition': 120} AND compactions = {'class': 'SizeTieredCompantionStrategy', 'min_threshold': 4}|
+             ]
+
+    create =
+      {:create,
+       table(:posts,
+         options: [
+           caching: %{enabled: true},
+           default_time_to_live: 7200,
+           speculative_retry: "10ms"
+         ]
+       ), [{:add, :id, :uuid, [primary_key: true]}]}
+
+    assert execute_ddl(create) ==
+             [
+               ~s|CREATE TABLE posts (id uuid, PRIMARY KEY (id)) WITH caching = {'enabled': true} AND default_time_to_live = 7200 AND speculative_retry = '10ms'|
              ]
   end
 

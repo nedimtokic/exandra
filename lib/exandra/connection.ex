@@ -724,7 +724,7 @@ defmodule Exandra.Connection do
   def ddl_logs(_), do: []
 
   def table_options(opts, clustering_opts) when is_list(opts) do
-    with_opts = for {key, config} <- opts, into: [], do: "#{key} = #{sorta_jsonify_opts(config)}"
+    with_opts = for {key, config} <- opts, into: [], do: "#{key} = #{table_option_value(config)}"
 
     " WITH #{clustering_opts}" <> Enum.join(with_opts, " AND ")
   end
@@ -737,11 +737,15 @@ defmodule Exandra.Connection do
     clustering_opts
   end
 
-  def sorta_jsonify_opts(opts) do
-    opts = Enum.map_join(opts, ", ", fn {key, val} -> "'#{key}': '#{val}'" end)
+  defp table_option_value(opts) when is_map(opts) do
+    opts = Enum.map_join(opts, ", ", fn {key, val} -> "'#{key}': #{table_option_value(val)}" end)
 
     "{" <> opts <> "}"
   end
+
+  defp table_option_value(value) when is_integer(value), do: to_string(value)
+  defp table_option_value(value) when is_boolean(value), do: to_string(value)
+  defp table_option_value(value) when is_binary(value), do: "'#{value}'"
 
   @impl Ecto.Adapters.SQL.Connection
   def execute_ddl({command, %Table{} = table, columns})
